@@ -20,13 +20,17 @@ jobs:
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses-dev cmake libffi-dev libssl-dev
       - name: Install buildozer
         run: |
+          pip3 install --user --upgrade pip
           pip3 install --user buildozer cython
           echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Build APK
         run: |
           buildozer init
+          # 修改权限行（如果 spec 中没有）
           sed -i 's/# android.permissions =/android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE/' buildozer.spec
+          # 使用 gitee 镜像加速 python-for-android
           sed -i 's|https://github.com/kivy/python-for-android.git|https://gitee.com/mirrors/python-for-android.git|g' buildozer.spec
+          # 构建
           buildozer android debug deploy run log_level=2
       - name: Upload APK
         uses: actions/upload-artifact@v4
