@@ -1,0 +1,53 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install buildozer
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip
+          pip3 install buildozer cython --user
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Create buildozer.spec
+        run: |
+          cat > buildozer.spec <<EOF
+[app]
+title = MyApp
+package.name = myapp
+package.domain = org.example
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas
+version = 0.1
+requirements = python3,kivy
+orientation = portrait
+fullscreen = 0
+
+android.permissions = WRITE_EXTERNAL_STORAGE
+android.api = 30
+android.minapi = 21
+android.ndk = 23b
+android.sdk = 30
+
+[buildozer]
+log_level = 2
+EOF
+      - name: Build APK
+        run: |
+          buildozer android debug deploy run log_level=2
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-trading-app
+          path: bin/*.apk
